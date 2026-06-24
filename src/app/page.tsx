@@ -119,6 +119,7 @@ export default function AdminPage() {
 
     if (!receiverAddress || !isValidAddress(receiverAddress, network)) {
       setQrUrl("");
+      qrCodeInstanceRef.current = null; // Reset QR instance so it re-creates on next valid URL
       return;
     }
 
@@ -128,6 +129,7 @@ export default function AdminPage() {
     const normalizedAmount = amount.replace(",", ".").trim();
     if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
       setQrUrl("");
+      qrCodeInstanceRef.current = null;
       return;
     }
 
@@ -159,46 +161,60 @@ export default function AdminPage() {
         } catch (err) {
           console.error("Failed to encode transfer data", err);
           setQrUrl("");
+          qrCodeInstanceRef.current = null;
         }
       }
     }
   }, [receiverAddress, amount, token, platform, network, isMounted, isAuthenticated]);
 
-  useEffect(() => {
-    if (network === "tron") {
-      setToken("USDT");
+  // Quand le réseau change, réinitialiser le token et l'adresse pour éviter les états incohérents
+  const handleNetworkChange = (newNetwork: "ethereum" | "tron") => {
+    if (newNetwork === network) return;
+    setNetwork(newNetwork);
+    setReceiverAddress(""); // L'ancien format d'adresse n'est plus valide
+    setQrUrl("");
+    qrCodeInstanceRef.current = null;
+    if (newNetwork === "tron") {
+      setToken("USDT"); // TRON ne supporte que USDT
     }
-  }, [network]);
+  };
 
   // Rendu du QR code
   useEffect(() => {
     if (!qrUrl || typeof window === "undefined" || !isMounted || !isAuthenticated) return;
 
-    import("qr-code-styling").then((QRCodeStylingModule) => {
-      const QRCodeStyling = QRCodeStylingModule.default;
-      const options = {
-        width: 240,
-        height: 240,
-        type: "svg" as const,
-        data: qrUrl,
-        image: "/trust.png",
-        dotsOptions: { color: "#000000", type: "extra-rounded" as const },
-        cornersSquareOptions: { color: "#000000", type: "extra-rounded" as const },
-        cornersDotOptions: { color: "#000000", type: "dot" as const },
-        backgroundOptions: { color: "#ffffff" },
-        imageOptions: { crossOrigin: "anonymous", margin: 6, imageSize: 0.35, hideBackgroundDots: true },
-      };
+    // Petit délai pour s'assurer que le DOM du qrCanvasRef est monté après le toggle qrUrl
+    const renderTimeout = setTimeout(() => {
+      import("qr-code-styling").then((QRCodeStylingModule) => {
+        const QRCodeStyling = QRCodeStylingModule.default;
+        const options = {
+          width: 240,
+          height: 240,
+          type: "svg" as const,
+          data: qrUrl,
+          image: "/trust.png",
+          dotsOptions: { color: "#000000", type: "extra-rounded" as const },
+          cornersSquareOptions: { color: "#000000", type: "extra-rounded" as const },
+          cornersDotOptions: { color: "#000000", type: "dot" as const },
+          backgroundOptions: { color: "#ffffff" },
+          imageOptions: { crossOrigin: "anonymous", margin: 6, imageSize: 0.35, hideBackgroundDots: true },
+        };
 
-      if (!qrCodeInstanceRef.current) {
-        qrCodeInstanceRef.current = new QRCodeStyling(options);
-        if (qrCanvasRef.current) {
-          qrCanvasRef.current.innerHTML = "";
-          qrCodeInstanceRef.current.append(qrCanvasRef.current);
+        if (qrCodeInstanceRef.current && qrCanvasRef.current && qrCanvasRef.current.childNodes.length > 0) {
+          // Instance exists and is still attached to the DOM — just update data
+          qrCodeInstanceRef.current.update(options);
+        } else {
+          // Fresh instance needed (first render or after DOM was destroyed/re-created)
+          qrCodeInstanceRef.current = new QRCodeStyling(options);
+          if (qrCanvasRef.current) {
+            qrCanvasRef.current.innerHTML = "";
+            qrCodeInstanceRef.current.append(qrCanvasRef.current);
+          }
         }
-      } else {
-        qrCodeInstanceRef.current.update(options);
-      }
-    });
+      });
+    }, 50); // 50ms ensures the conditional DOM node is mounted
+
+    return () => clearTimeout(renderTimeout);
   }, [qrUrl, isMounted, isAuthenticated]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -308,8 +324,8 @@ export default function AdminPage() {
           {/* Sélection du Réseau */}
           <label className="form-label">Network</label>
           <div className="token-tabs" style={{ marginBottom: "1.25rem" }}>
-            <button type="button" className={`token-tab ${network === "ethereum" ? "token-tab--active" : ""}`} onClick={() => setNetwork("ethereum")}>Ethereum (ERC-20)</button>
-            <button type="button" className={`token-tab ${network === "tron" ? "token-tab--active" : ""}`} onClick={() => setNetwork("tron")}>TRON (TRC-20)</button>
+            <button type="button" className={`token-tab ${network === "ethereum" ? "token-tab--active" : ""}`} onClick={() => handleNetworkChange("ethereum")}>Ethereum (ERC-20)</button>
+            <button type="button" className={`token-tab ${network === "tron" ? "token-tab--active" : ""}`} onClick={() => handleNetworkChange("tron")}>TRON (TRC-20)</button>
           </div>
 
           <label className="form-label">Select Asset</label>
