@@ -125,24 +125,37 @@ export default function AdminPage() {
     const origin = window.location.origin;
     const baseUrl = `${origin}/wallet`;
 
-    if (platform === "ios") {
-      const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(amount)}&token=${encodeURIComponent(token.toLowerCase())}&network=${network}`;
-      const coinId = network === "tron" ? 195 : 60;
-      const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
-      setQrUrl(trustWalletLink);
-    } else {
-      // Android : deep link send direct (sans redirection)
+    if (network === "tron") {
       const normalizedAmount = amount.replace(",", ".").trim();
       if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
         setQrUrl("");
         return;
       }
-
-      if (network === "tron") {
+      if (platform === "ios") {
+        // iOS: open the wallet page inside Trust Wallet's internal browser
+        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=usdt&network=tron`;
+        const coinId = 195; // TRON coin ID in Trust Wallet
+        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
+        setQrUrl(trustWalletLink);
+      } else {
+        // Android: direct send deep link
         const assetId = "c195_tTR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT TRC-20
         const sendUrl = `https://link.trustwallet.com/send?asset=${assetId}&address=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}`;
         setQrUrl(sendUrl);
+      }
+    } else {
+      if (platform === "ios") {
+        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(amount)}&token=${encodeURIComponent(token.toLowerCase())}&network=${network}`;
+        const coinId = 60;
+        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
+        setQrUrl(trustWalletLink);
       } else {
+        // Android : deep link send direct (sans redirection)
+        const normalizedAmount = amount.replace(",", ".").trim();
+        if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
+          setQrUrl("");
+          return;
+        }
         try {
           const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
           const callData = encodeTransferData(receiverAddress, normalizedAmount);
@@ -388,7 +401,11 @@ export default function AdminPage() {
 
           <div className="receive-asset-row">
             {token === "USDT" ? (
-              <img src="/usdt.png" alt="USDT" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
+              network === "tron" ? (
+                <img src="/usdt_trc20.jpeg" alt="USDT TRC-20" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
+              ) : (
+                <img src="/usdt.png" alt="USDT" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
+              )
             ) : (
               <img src="/usdc.png" alt="USDC" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
             )}
@@ -414,8 +431,8 @@ export default function AdminPage() {
                   ? "Enter a receiver address to generate QR Code"
                   : !isValidAddress(receiverAddress, network)
                   ? "Invalid address format"
-                  : platform === "android" && (!amount || isNaN(Number(amount.replace(",", "."))) || Number(amount.replace(",", ".")) <= 0)
-                  ? "Enter a valid amount to generate Android QR"
+                  : (network === "tron" || platform === "android") && (!amount || isNaN(Number(amount.replace(",", "."))) || Number(amount.replace(",", ".")) <= 0)
+                  ? `Enter a valid amount to generate ${network === "tron" ? "TRC20" : "Android"} QR`
                   : "QR Code will appear here"}
               </div>
             </div>
