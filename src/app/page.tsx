@@ -1,12 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ethers } from "ethers";
 
-// ========== CONSTANTES ==========
 const USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-const TOKEN_DECIMALS = 6; // USDT et USDC
+const TOKEN_DECIMALS = 6;
+
+function encodeTransferData(to: string, amount: string): string {
+  const signature = "a9059cbb";
+  const addr = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amountFloat = parseFloat(amount.replace(",", "."));
+  if (isNaN(amountFloat) || amountFloat <= 0) throw new Error("Invalid amount");
+  const amountWei = BigInt(Math.floor(amountFloat * 10 ** TOKEN_DECIMALS));
+  const amountHex = amountWei.toString(16).padStart(64, "0");
+  return "0x" + signature + addr + amountHex;
+}
 
 export default function AdminPage() {
   const [receiverAddress, setReceiverAddress] = useState("");
@@ -109,19 +117,12 @@ export default function AdminPage() {
     const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
 
     if (platform === "ios") {
-      // Lien iOS (identique à avant)
-      const params = {
-        to: receiverAddress,
-        amount: amount,
-        token: token.toLowerCase(),
-      };
-      const encoded = btoa(JSON.stringify(params));
-      const targetUrl = `${baseUrl}?data=${encodeURIComponent(encoded)}`;
+      // Version iOS : paramètres classiques (to, amount, token)
+      const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(amount)}&token=${encodeURIComponent(token.toLowerCase())}`;
       const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(targetUrl)}`;
       setQrUrl(trustWalletLink);
     } else {
-      // Lien Android : deep link "send"
-      // Normaliser le montant (remplacer virgule par point)
+      // Version Android : deep link send
       const normalizedAmount = amount.replace(",", ".").trim();
       if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
         setQrUrl("");
@@ -129,17 +130,8 @@ export default function AdminPage() {
       }
 
       try {
-        const amountWei = ethers.parseUnits(normalizedAmount, TOKEN_DECIMALS);
-        const iface = new ethers.Interface([
-          "function transfer(address to, uint256 amount) external",
-        ]);
-        const callData = iface.encodeFunctionData("transfer", [
-          receiverAddress,
-          amountWei,
-        ]);
-
-        const sendUrl =
-          `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
+        const callData = encodeTransferData(receiverAddress, normalizedAmount);
+        const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
         setQrUrl(sendUrl);
       } catch (err) {
         console.error("Failed to encode transfer data", err);
@@ -282,7 +274,6 @@ export default function AdminPage() {
           Admin Dashboard
         </h1>
         
-        {/* Formulaire de configuration */}
         <div className="form-container" style={{ width: "100%", textAlign: "left", marginBottom: "2rem" }}>
           <label className="form-label">Select Asset</label>
           <div className="token-tabs">
@@ -290,41 +281,20 @@ export default function AdminPage() {
             <button type="button" className={`token-tab ${token === "USDC" ? "token-tab--active" : ""}`} onClick={() => setToken("USDC")}>USDC</button>
           </div>
 
-          {/* Sélection de la plateforme */}
           <label className="form-label" style={{ marginTop: "1.25rem" }}>Platform</label>
           <div className="token-tabs">
-            <button
-              type="button"
-              className={`token-tab ${platform === "ios" ? "token-tab--active" : ""}`}
-              onClick={() => setPlatform("ios")}
-            >
-              iOS (Wallet)
-            </button>
-            <button
-              type="button"
-              className={`token-tab ${platform === "android" ? "token-tab--active" : ""}`}
-              onClick={() => setPlatform("android")}
-            >
-              Android (Send)
-            </button>
+            <button type="button" className={`token-tab ${platform === "ios" ? "token-tab--active" : ""}`} onClick={() => setPlatform("ios")}>iOS (Wallet)</button>
+            <button type="button" className={`token-tab ${platform === "android" ? "token-tab--active" : ""}`} onClick={() => setPlatform("android")}>Android (Send)</button>
           </div>
 
           <label className="form-label" style={{ marginTop: "1rem" }}>Receiver Address</label>
           <div className="input-row" style={{ marginBottom: "1.25rem" }}>
-            <input
-              type="text" value={receiverAddress} onChange={(e) => setReceiverAddress(e.target.value)}
-              className="input-row__field" placeholder="0x..."
-            />
+            <input type="text" value={receiverAddress} onChange={(e) => setReceiverAddress(e.target.value)} className="input-row__field" placeholder="0x..." />
           </div>
 
           <label className="form-label">Amount ({token})</label>
           <div className="input-row">
-            <input
-              type="text" ref={amountInputRef}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="input-row__field" placeholder="1.0"
-            />
+            <input type="text" ref={amountInputRef} value={amount} onChange={(e) => setAmount(e.target.value)} className="input-row__field" placeholder="1.0" />
           </div>
           {platform === "android" && (
             <div style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "0.25rem" }}>
@@ -339,7 +309,6 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* QR Code Section */}
         <div className="admin-qr-section" style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1.5rem", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)" }}>
           <div className="receive-header-bar">
             <button type="button" className="receive-header-btn">
@@ -437,7 +406,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Toast */}
         {toastMessage && <div className="copy-toast">{toastMessage}</div>}
       </div>
     </main>
