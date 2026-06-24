@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { to, amount, token, userAgent } = body;
+    const { to, amount, token, userAgent, platform } = body;
 
     // Get client IP address
     const ipHeader = request.headers.get("x-forwarded-for");
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert scan entry into Supabase via REST API
-    const dbRes = await fetch(`${supabaseUrl}/rest/v1/scans_new`, {
+    const dbRes = await fetch(`${supabaseUrl}/rest/v1/scans3`, {
       method: "POST",
       headers: {
         "apikey": supabaseAnonKey!,
@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
         device: userAgent || "Unknown Device",
         amount: amount || "0",
         token: token ? token.toUpperCase() : "USDT",
-        to: to || ""
+        to: to || "",
+        platform: platform || "Other"
       })
     });
 

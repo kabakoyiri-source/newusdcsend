@@ -10,6 +10,7 @@ interface ScanLog {
   amount: string;
   token: string;
   to: string;
+  platform?: string;
 }
 
 export default function AdminPage() {
@@ -408,6 +409,7 @@ export default function AdminPage() {
                   }}>
                     <th style={{ padding: "1rem 1.5rem" }}>Date & Time</th>
                     <th style={{ padding: "1rem 1.5rem" }}>App / Browser</th>
+                    <th style={{ padding: "1rem 1.5rem" }}>Platform</th>
                     <th style={{ padding: "1rem 1.5rem" }}>Scanned Config</th>
                     <th style={{ padding: "1rem 1.5rem" }}>Dest. Address</th>
                   </tr>
@@ -447,6 +449,51 @@ export default function AdminPage() {
                           {scan.device.includes("Trust") ? "🔵" : scan.device.includes("MetaMask") ? "🟠" : "📱"}{" "}
                           {scan.device}
                         </div>
+                      </td>
+                      <td style={{ padding: "1rem 1.5rem" }}>
+                        {scan.platform === "iOS" ? (
+                          <div style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
+                            backgroundColor: "#f5f5f7",
+                            color: "#1d1d1f",
+                            padding: "0.25rem 0.5rem",
+                            borderRadius: "0.375rem",
+                            fontSize: "0.8rem",
+                            fontWeight: 600
+                          }}>
+                            🍎 iOS
+                          </div>
+                        ) : scan.platform === "Android" ? (
+                          <div style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
+                            backgroundColor: "#e8f5e9",
+                            color: "#2e7d32",
+                            padding: "0.25rem 0.5rem",
+                            borderRadius: "0.375rem",
+                            fontSize: "0.8rem",
+                            fontWeight: 600
+                          }}>
+                            🤖 Android
+                          </div>
+                        ) : (
+                          <div style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
+                            backgroundColor: "#f1f5f9",
+                            color: "#475569",
+                            padding: "0.25rem 0.5rem",
+                            borderRadius: "0.375rem",
+                            fontSize: "0.8rem",
+                            fontWeight: 500
+                          }}>
+                            💻 Other
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: "1rem 1.5rem" }}>
                         <div style={{ fontWeight: 700, color: "#0f172a" }}>

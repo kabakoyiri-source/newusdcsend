@@ -21,7 +21,7 @@ export async function GET() {
       });
     }
 
-    const dbRes = await fetch(`${supabaseUrl}/rest/v1/scans_new?select=*&order=timestamp.desc`, {
+    const dbRes = await fetch(`${supabaseUrl}/rest/v1/scans3?select=*&order=timestamp.desc`, {
       method: "GET",
       headers: {
         "apikey": supabaseAnonKey!,
@@ -71,7 +71,7 @@ export async function DELETE() {
     }
 
     // Clear logs from Supabase. We specify id=gt.0 as filter to match all rows
-    const dbRes = await fetch(`${supabaseUrl}/rest/v1/scans_new?id=gt.0`, {
+    const dbRes = await fetch(`${supabaseUrl}/rest/v1/scans3?id=gt.0`, {
       method: "DELETE",
       headers: {
         "apikey": supabaseAnonKey!,
