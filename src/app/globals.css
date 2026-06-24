@@ -1,0 +1,1359 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings: 'slnt' 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ================================================================
+   ================================================================
+   HOME PAGE (white / QR code)
+   ================================================================
+   ================================================================ */
+
+.home-main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Decorative blobs */
+.home-bg-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home-bg-shape--1 {
+  width: 500px;
+  height: 500px;
+  background: #dbeafe;
+  top: -120px;
+  right: -120px;
+}
+
+.home-bg-shape--2 {
+  width: 400px;
+  height: 400px;
+  background: #d1fae5;
+  bottom: -100px;
+  left: -100px;
+}
+
+.home-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+/* Logo */
+.home-logo {
+  margin-bottom: 1.25rem;
+}
+
+/* Title */
+.home-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+/* Subtitle */
+.home-subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0 0 2rem;
+  line-height: 1.6;
+  max-width: 360px;
+}
+
+/* QR Card */
+.qr-card {
+  position: relative;
+  background: #ffffff;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 0.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+.qr-glow {
+  display: none;
+}
+
+@keyframes glow-rotate {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.qr-image {
+  display: block;
+  border-radius: 0.5rem;
+}
+
+/* Steps */
+.home-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.home-step__number {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #0500FF;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.home-step__text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.home-step__arrow {
+  font-size: 1rem;
+  color: #d1d5db;
+  font-weight: 300;
+}
+
+/* Footer text */
+.home-footer-text {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.home-footer-text::before {
+  content: "🔒";
+  font-size: 0.7rem;
+}
+
+/* ================================================================
+   ================================================================
+   WALLET PAGE (dark / transfer form)
+   ================================================================
+   ================================================================ */
+
+.transfer-main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: #ffffff;
+}
+
+.connected-badge {
+  background: #dbeafe;
+  color: #1e3a8a;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #bfdbfe;
+}
+
+/* ============================================================
+   FORM CONTAINER
+   ============================================================ */
+
+.form-container {
+  width: 100%;
+  max-width: 480px;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+}
+
+/* ============================================================
+   LABELS
+   ============================================================ */
+
+.form-label {
+  display: block;
+  color: #5c6470;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.form-label--spaced {
+  margin-top: 1.5rem;
+}
+
+/* ============================================================
+   INPUT ROW (Address & Amount)
+   ============================================================ */
+
+.input-row {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  gap: 0.5rem;
+  transition: border-color 0.2s;
+}
+
+.input-row:focus-within {
+  border-color: #3562ff;
+}
+
+.input-row__field {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.input-row__field--amount {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.input-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   BUTTONS INSIDE INPUTS
+   ============================================================ */
+
+.btn-paste {
+  background: transparent;
+  border: none;
+  color: #3562ff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.btn-icon svg {
+  stroke: #3562ff;
+}
+
+.btn-step {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-max {
+  background: transparent;
+  border: none;
+  color: #3562ff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   AMOUNT ACTIONS
+   ============================================================ */
+
+.amount-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.amount-currency {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   NETWORK SELECTOR
+   ============================================================ */
+
+.network-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.4rem 0.85rem 0.4rem 0.4rem;
+  cursor: pointer;
+}
+
+.eth-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #3562ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.network-name {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ============================================================
+   APPROX PRICE
+   ============================================================ */
+
+.approx-price {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+/* ============================================================
+   NEXT BUTTON
+   ============================================================ */
+
+.next-btn-wrapper {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: center;
+}
+
+.next-btn {
+  display: inline-block;
+  width: 100%;
+  max-width: 480px;
+  padding: 0.95rem 3rem;
+  background-color: #9395ff;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.05rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  border: none;
+}
+
+.next-btn:hover {
+  background-color: #8385ff;
+}
+
+.next-btn:active {
+  background-color: #7275ff;
+}
+
+/* ============================================================
+   STATUS MESSAGES
+   ============================================================ */
+
+.status-message {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.status-message--info {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
+.status-message--success {
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: #4ade80;
+}
+
+.status-message--error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.status-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #93c5fd;
+  text-decoration: underline;
+  font-size: 0.8rem;
+}
+
+.status-link:hover {
+  color: #bfdbfe;
+}
+
+/* ============================================================
+   LOADING / DISABLED BUTTON STATE
+   ============================================================ */
+
+.next-btn:disabled,
+.next-btn--loading {
+  background-color: #94a3b8;
+  color: #f1f5f9;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.next-btn--loading:hover {
+  background-color: #94a3b8;
+  transform: none;
+}
+
+.btn-spinner-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ================================================================
+   ================================================================
+   RESPONSIVE
+   ================================================================
+   ================================================================ */
+
+/* --- HOME PAGE responsive --- */
+
+@media (max-width: 480px) {
+  .home-main {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .home-title {
+    font-size: 1.35rem;
+  }
+
+  .home-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .qr-card {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .qr-image {
+    width: 220px;
+    height: 220px;
+  }
+
+  .home-steps {
+    gap: 0.5rem;
+  }
+
+  .home-step__text {
+    font-size: 0.75rem;
+  }
+
+  .home-step__number {
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+  }
+
+  .home-step__arrow {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-title {
+    font-size: 1.2rem;
+  }
+
+  .qr-image {
+    width: 180px;
+    height: 180px;
+  }
+
+  .qr-card {
+    padding: 0.85rem;
+  }
+
+  .home-steps {
+    gap: 0.35rem;
+  }
+
+  .home-step__text {
+    font-size: 0.7rem;
+  }
+}
+
+/* --- WALLET PAGE responsive --- */
+
+@media (max-width: 768px) {
+  .transfer-main {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .form-container {
+    padding: 1.5rem;
+    border-radius: 0.85rem;
+  }
+
+  .next-btn {
+    padding: 0.85rem 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .transfer-main {
+    padding: 1.5rem 1.25rem;
+    justify-content: flex-start;
+    padding-top: 1.5rem;
+    background: #ffffff;
+  }
+
+  .home-content {
+    margin: auto 0;
+  }
+
+  .admin-qr-section {
+    padding: 1rem;
+  }
+
+  .wallet-page .form-container {
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    max-width: 100%;
+  }
+
+  .form-label {
+    font-size: 0.95rem;
+  }
+
+  .form-label--spaced {
+    margin-top: 1.15rem;
+  }
+
+  .input-row {
+    padding: 0.55rem 0.6rem;
+    gap: 0.35rem;
+    border-radius: 0.6rem;
+  }
+
+  .input-row__field {
+    font-size: 0.85rem;
+  }
+
+  .input-row__field--amount {
+    font-size: 0.95rem;
+  }
+
+  .input-row__actions {
+    gap: 0.4rem;
+  }
+
+  .btn-paste {
+    font-size: 0.8rem;
+  }
+
+  .btn-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .network-selector {
+    padding: 0.4rem 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .eth-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .eth-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .network-name {
+    font-size: 0.85rem;
+  }
+
+  .amount-currency {
+    font-size: 0.8rem;
+    margin-left: 6px;
+  }
+
+  .btn-max {
+    font-size: 0.8rem;
+    margin-left: 6px;
+  }
+
+  .approx-price {
+    font-size: 0.8rem;
+  }
+
+  .next-btn-wrapper {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+  }
+
+  .next-btn {
+    padding: 0.85rem 1.5rem;
+    font-size: 0.95rem;
+    border-radius: 0.6rem;
+  }
+
+  .status-message {
+    font-size: 0.8rem;
+    padding: 0.65rem 0.85rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .transfer-main {
+    padding: 0.75rem 0.35rem;
+    padding-top: 1.5rem;
+  }
+
+  .wallet-page .form-container {
+    padding: 1rem;
+  }
+
+  .input-row {
+    padding: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .input-row__field {
+    font-size: 0.8rem;
+    width: 100%;
+  }
+
+  .btn-paste {
+    font-size: 0.75rem;
+  }
+
+  .next-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* ============================================================
+   TOKEN SELECTOR TABS
+   ============================================================ */
+.token-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.token-tab {
+  flex: 1;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.token-tab--active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================
+   QR CODE ADDRESS DISPLAY
+   ============================================================ */
+.qr-address {
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #475569;
+  line-height: 1.4;
+  text-align: center;
+  margin-top: 1.25rem;
+  margin-bottom: 1.5rem;
+  word-break: break-all;
+}
+
+/* ============================================================
+   QR CODE ACTION BUTTONS
+   ============================================================ */
+.qr-actions-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.qr-action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qr-action-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #0f172a;
+  outline: none;
+}
+
+.qr-action-btn:hover {
+  background-color: #e2e8f0;
+  transform: scale(1.05);
+}
+
+.qr-action-btn:active {
+  transform: scale(0.95);
+}
+
+.qr-action-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/* Floating copy status indicator */
+.copy-toast {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(15, 23, 42, 0.9);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  pointer-events: none;
+  animation: fadeInOut 2s ease-in-out forwards;
+  z-index: 10;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, 10px); }
+  15% { opacity: 1; transform: translate(-50%, 0); }
+  85% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
+}
+
+/* ============================================================
+   ADMIN SPACING FOR QR CODE
+   ============================================================ */
+.admin-qr-section {
+  margin-top: 440px;
+  margin-bottom: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+/* ============================================================
+   MONTANT (AMOUNT) COMPONENT
+   ============================================================ */
+.montant-container {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  background: #ffffff;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.montant-container:focus-within,
+.montant-container--active {
+  border: 1.5px solid #0033ff !important;
+}
+
+.montant-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #0f172a;
+  width: 100%;
+  padding: 0;
+}
+
+.montant-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  min-height: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.montant-display-value {
+  color: #0f172a;
+}
+
+.montant-placeholder {
+  color: #94a3b8;
+}
+
+.blinking-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.15rem;
+  background-color: #0033ff;
+  margin-left: 2px;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  from, to {
+    background-color: transparent;
+  }
+  50% {
+    background-color: #0033ff;
+  }
+}
+
+.montant-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.montant-token {
+  color: #8e8e93;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.montant-max-btn {
+  background: transparent;
+  border: none;
+  color: #0033ff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  outline: none;
+}
+
+.montant-max-btn:hover {
+  color: #1a44e5;
+}
+
+.montant-clear-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: color 0.1s;
+}
+
+.montant-clear-btn:hover {
+  color: #64748b;
+}
+
+.montant-error {
+  color: #df3e3e;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  padding-left: 0.25rem;
+  text-align: left;
+  font-weight: 500;
+}
+
+/* ============================================================
+   CUSTOM NUMERICAL KEYPAD
+   ============================================================ */
+.custom-keypad {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px; /* Aligns with form width */
+  background-color: #d2d5db; /* iOS Light Keyboard Background */
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 6px;
+  border-top: 0.5px solid #acb0b7;
+  z-index: 1000;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  user-select: none;
+  animation: slide-up-keypad 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes slide-up-keypad {
+  from { transform: translate(-50%, 100%); }
+  to { transform: translate(-50%, 0); }
+}
+
+.keypad-key {
+  background-color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.05s ease;
+  box-shadow: 0 1px 0px rgba(0, 0, 0, 0.3);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+.keypad-key:active {
+  background-color: #e1e4ea;
+}
+
+.keypad-key__number {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #000000;
+  line-height: 1;
+}
+
+.keypad-key__letters {
+  font-size: 0.6rem;
+  color: #000000;
+  font-weight: 500;
+  margin-top: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Key with no letters */
+.keypad-key--no-letters {
+  justify-content: center;
+}
+
+.keypad-key--no-letters .keypad-key__number {
+  font-size: 1.6rem;
+}
+
+/* Special keys */
+.keypad-key--special {
+  background-color: #b9bec6; /* iOS grey button background */
+  box-shadow: 0 1px 0px rgba(0, 0, 0, 0.3);
+}
+
+.keypad-key--special:active {
+  background-color: #a7acb4;
+}
+
+/* Add padding at the bottom of the form when the keypad is open */
+.transfer-main-pad {
+  transition: padding-bottom 0.2s ease;
+}
+
+.transfer-main-pad--with-keyboard {
+  padding-bottom: 240px;
+}
+
+/* ============================================================
+   TRANSACTION PROCESSING MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  padding: 2.25rem 2rem;
+  width: calc(100% - 2rem);
+  max-width: 400px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modal-scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
+}
+
+@keyframes modal-scale-in {
+  from { transform: scale(0.9) translateY(10px); }
+  to { transform: scale(1) translateY(0); }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  outline: none;
+}
+
+.modal-close-btn:hover {
+  color: #475569;
+}
+
+.modal-logo {
+  width: 140px;
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.75rem 0;
+}
+
+.modal-text {
+  font-size: 0.95rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 2rem 0;
+  font-weight: 400;
+}
+
+.modal-details-btn {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background-color: #0000ff; /* Solid deep blue */
+  color: #ffffff;
+  text-align: center;
+  border: none;
+  border-radius: 2rem; /* capsule-like pill shape */
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  text-decoration: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.modal-details-btn:hover {
+  background-color: #0000d6;
+  transform: translateY(-1px);
+}
+
+.modal-details-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ============================================================
+   TRUST WALLET RECEIVE COMPONENT (ADMIN PAGE LOWER HALF)
+   ============================================================ */
+
+/* Receive Header Bar */
+.receive-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.25rem;
+  margin-bottom: 0.65rem;
+}
+
+.receive-header-btn {
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #1e293b;
+  outline: none;
+  transition: background-color 0.15s;
+}
+
+.receive-header-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.receive-header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Alert Warning Banner */
+.receive-alert-banner {
+  background: #fffbeb;
+  border: 1px solid #fef08a;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  text-align: left;
+  margin-bottom: 0.65rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.receive-alert-icon {
+  color: #ca8a04;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.receive-alert-text {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #854d0e;
+  line-height: 1.35;
+}
+
+/* Asset Display Row */
+.receive-asset-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.65rem 0;
+}
+
+.receive-asset-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.receive-network-badge {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2rem;
+}
+
+/* Bottom Deposit Box */
+.receive-deposit-box {
+  background: #f8fafc;
+  border-radius: 1rem;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  margin-top: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.receive-deposit-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #9395ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.receive-deposit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.receive-deposit-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.receive-deposit-subtitle {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+
