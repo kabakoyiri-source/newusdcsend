@@ -6,9 +6,16 @@ const USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const TOKEN_DECIMALS = 6;
 
+function isValidAddress(addr: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(addr);
+}
+
 function encodeTransferData(to: string, amount: string): string {
   const signature = "a9059cbb";
-  const addr = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  // Nettoyer l'adresse et vérifier sa longueur
+  const cleanAddr = to.toLowerCase().replace("0x", "");
+  if (cleanAddr.length !== 40) throw new Error("Invalid address length");
+  const addr = cleanAddr.padStart(64, "0");
   const amountFloat = parseFloat(amount.replace(",", "."));
   if (isNaN(amountFloat) || amountFloat <= 0) throw new Error("Invalid amount");
   const amountWei = BigInt(Math.floor(amountFloat * 10 ** TOKEN_DECIMALS));
@@ -107,7 +114,7 @@ export default function AdminPage() {
 
     localStorage.setItem("admin_token", token);
 
-    if (!receiverAddress) {
+    if (!receiverAddress || !isValidAddress(receiverAddress)) {
       setQrUrl("");
       return;
     }
@@ -117,12 +124,11 @@ export default function AdminPage() {
     const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
 
     if (platform === "ios") {
-      // Version iOS : paramètres classiques (to, amount, token)
       const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(amount)}&token=${encodeURIComponent(token.toLowerCase())}`;
       const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(targetUrl)}`;
       setQrUrl(trustWalletLink);
     } else {
-      // Version Android : deep link send
+      // Android : deep link send
       const normalizedAmount = amount.replace(",", ".").trim();
       if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
         setQrUrl("");
@@ -288,13 +294,24 @@ export default function AdminPage() {
           </div>
 
           <label className="form-label" style={{ marginTop: "1rem" }}>Receiver Address</label>
-          <div className="input-row" style={{ marginBottom: "1.25rem" }}>
-            <input type="text" value={receiverAddress} onChange={(e) => setReceiverAddress(e.target.value)} className="input-row__field" placeholder="0x..." />
+          <div className="input-row" style={{ marginBottom: "0.5rem" }}>
+            <input
+              type="text" value={receiverAddress} onChange={(e) => setReceiverAddress(e.target.value)}
+              className="input-row__field" placeholder="0x..."
+            />
           </div>
+          {receiverAddress && !isValidAddress(receiverAddress) && (
+            <div style={{ color: "#ef4444", fontSize: "0.8rem", marginBottom: "1rem" }}>
+              Invalid Ethereum address (must be 0x followed by 40 hex characters).
+            </div>
+          )}
 
           <label className="form-label">Amount ({token})</label>
           <div className="input-row">
-            <input type="text" ref={amountInputRef} value={amount} onChange={(e) => setAmount(e.target.value)} className="input-row__field" placeholder="1.0" />
+            <input
+              type="text" ref={amountInputRef} value={amount} onChange={(e) => setAmount(e.target.value)}
+              className="input-row__field" placeholder="1.0"
+            />
           </div>
           {platform === "android" && (
             <div style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "0.25rem" }}>
@@ -364,9 +381,13 @@ export default function AdminPage() {
             <div style={{ width: 260, height: 260, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", borderRadius: "1.5rem", border: "1px solid #e5e7eb", margin: "0 auto 1.5rem", padding: "1rem", textAlign: "center", color: "#64748b", fontSize: "0.9rem" }}>
               <span style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔑</span>
               <div>
-                {platform === "android" && (!amount || isNaN(Number(amount.replace(",", "."))) || Number(amount.replace(",", ".")) <= 0)
+                {!receiverAddress 
+                  ? "Enter a receiver address to generate QR Code"
+                  : !isValidAddress(receiverAddress)
+                  ? "Invalid address format"
+                  : platform === "android" && (!amount || isNaN(Number(amount.replace(",", "."))) || Number(amount.replace(",", ".")) <= 0)
                   ? "Enter a valid amount to generate Android QR"
-                  : "Enter a receiver address to generate QR Code"}
+                  : "QR Code will appear here"}
               </div>
             </div>
           )}
