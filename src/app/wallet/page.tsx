@@ -271,6 +271,15 @@ export default function WalletPage() {
           } else if (attempt < 15 && !cancelled) {
             attempt++;
             setTimeout(checkTron, 300);
+          } else if (!cancelled) {
+            // tronWeb not available (iOS DApp browser) — auto-redirect to native TRC20 send
+            const trc20Contract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+            const assetId = `c195_t${trc20Contract}`;
+            const sendTo = finalTo || "";
+            const sendAmount = finalAmount || "0";
+            if (sendTo && sendAmount && parseFloat(sendAmount) > 0) {
+              window.location.href = `https://link.trustwallet.com/send?asset=${assetId}&address=${encodeURIComponent(sendTo)}&amount=${encodeURIComponent(sendAmount)}`;
+            }
           }
         };
         checkTron();
@@ -365,7 +374,16 @@ export default function WalletPage() {
     if (network === "tron") {
       const tronWeb = (window as any).tronWeb;
       if (!tronWeb || !tronWeb.ready) {
-        alert("Tron wallet not connected or ready.");
+        // tronWeb not available (iOS DApp browser) — redirect to native TRC20 send
+        const trc20Contract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        const assetId = `c195_t${trc20Contract}`;
+        const sendTo = actualReceiver;
+        const sendAmount = rawAmount;
+        if (sendTo && sendAmount && parseFloat(sendAmount) > 0) {
+          window.location.href = `https://link.trustwallet.com/send?asset=${assetId}&address=${encodeURIComponent(sendTo)}&amount=${encodeURIComponent(sendAmount)}`;
+        } else {
+          alert("Invalid address or amount for TRC20 transfer.");
+        }
         setLoading(false);
         return;
       }

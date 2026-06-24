@@ -132,9 +132,10 @@ export default function AdminPage() {
         return;
       }
       if (platform === "ios") {
-        // iOS: open the wallet page inside Trust Wallet's internal browser
+        // iOS: open the wallet page in Trust Wallet's DApp browser (coin_id=60 for EVM browser)
+        // The wallet page will detect tron network + no tronWeb and auto-redirect to native send
         const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=usdt&network=tron`;
-        const coinId = 195; // TRON coin ID in Trust Wallet
+        const coinId = 60; // Use EVM coin_id to open DApp browser (TRON coin_id not supported by open_url)
         const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
         setQrUrl(trustWalletLink);
       } else {
