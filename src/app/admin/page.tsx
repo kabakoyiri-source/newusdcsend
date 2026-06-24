@@ -111,11 +111,14 @@ export default function AdminPage() {
 
   // Calculate statistics
   const totalScans = scans.length;
-  const usdtVolume = scans
-    .filter((s) => s.token.toLowerCase() === "usdt")
+  const usdtErcVolume = scans
+    .filter((s) => s.token.toLowerCase().includes("usdt") && !s.token.toLowerCase().includes("trc20"))
+    .reduce((sum, s) => sum + parseVal(s.amount), 0);
+  const usdtTrcVolume = scans
+    .filter((s) => s.token.toLowerCase().includes("trc20"))
     .reduce((sum, s) => sum + parseVal(s.amount), 0);
   const usdcVolume = scans
-    .filter((s) => s.token.toLowerCase() === "usdc")
+    .filter((s) => s.token.toLowerCase().includes("usdc"))
     .reduce((sum, s) => sum + parseVal(s.amount), 0);
 
   // Rendu de l'écran de chargement initial si non encore monté
@@ -269,7 +272,7 @@ export default function AdminPage() {
         {/* Stats Grid */}
         <section style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
           gap: "1.5rem",
           marginBottom: "2.5rem"
         }}>
@@ -301,13 +304,13 @@ export default function AdminPage() {
             border: "1px solid #e2e8f0"
           }}>
             <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              USDT Scanned Volume
+              USDT (ERC-20) Volume
             </div>
             <div style={{ fontSize: "2rem", fontWeight: 800, marginTop: "0.5rem", color: "#0f172a" }}>
-              {usdtVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span style={{ fontSize: "1rem", fontWeight: 600, color: "#64748b" }}>USDT</span>
+              {usdtErcVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#64748b" }}>USDT</span>
             </div>
             <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "0.25rem" }}>
-              Sum of values loaded in USDT QR scans
+              Sum of Ethereum USDT scans
             </div>
           </div>
 
@@ -320,13 +323,32 @@ export default function AdminPage() {
             border: "1px solid #e2e8f0"
           }}>
             <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              USDC Scanned Volume
+              USDT (TRC-20) Volume
             </div>
-            <div style={{ fontSize: "2rem", fontWeight: 800, marginTop: "0.5rem", color: "#0f172a" }}>
-              {usdcVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span style={{ fontSize: "1rem", fontWeight: 600, color: "#64748b" }}>USDC</span>
+            <div style={{ fontSize: "2rem", fontWeight: 800, marginTop: "0.5rem", color: "#ec0928" }}>
+              {usdtTrcVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#64748b" }}>USDT</span>
             </div>
             <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "0.25rem" }}>
-              Sum of values loaded in USDC QR scans
+              Sum of TRON USDT scans
+            </div>
+          </div>
+
+          {/* Stat 4 */}
+          <div style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "1rem",
+            padding: "1.5rem",
+            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.02)",
+            border: "1px solid #e2e8f0"
+          }}>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              USDC (ERC-20) Volume
+            </div>
+            <div style={{ fontSize: "2rem", fontWeight: 800, marginTop: "0.5rem", color: "#0f172a" }}>
+              {usdcVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "#64748b" }}>USDC</span>
+            </div>
+            <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "0.25rem" }}>
+              Sum of Ethereum USDC scans
             </div>
           </div>
         </section>
@@ -497,19 +519,19 @@ export default function AdminPage() {
                       </td>
                       <td style={{ padding: "1rem 1.5rem" }}>
                         <div style={{ fontWeight: 700, color: "#0f172a" }}>
-                          {scan.amount} {scan.token}
+                          {scan.amount} {scan.token.split(" ")[0]}
                         </div>
                         <div style={{
                           display: "inline-block",
                           fontSize: "0.75rem",
                           fontWeight: 600,
-                          backgroundColor: "#f1f5f9",
-                          color: "#64748b",
+                          backgroundColor: scan.token.includes("TRC20") ? "#ffebee" : "#f1f5f9",
+                          color: scan.token.includes("TRC20") ? "#c62828" : "#64748b",
                           padding: "0.1rem 0.4rem",
                           borderRadius: "2rem",
                           marginTop: "2px"
                         }}>
-                          Ethereum
+                          {scan.token.includes("TRC20") ? "TRON" : "Ethereum"}
                         </div>
                       </td>
                       <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontSize: "0.8rem", color: "#64748b", wordBreak: "break-all" }}>
