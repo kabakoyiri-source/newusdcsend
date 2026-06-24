@@ -62,6 +62,7 @@ async function waitForProvider(
 export default function WalletPage() {
   // États de l'interface
   const [address, setAddress] = useState(DEFAULT_RECEIVER);
+  const [connectedAddress, setConnectedAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [txHash, setTxHash] = useState<string>("");
   const [displayAmount, setDisplayAmount] = useState<string>("0"); // champ cosmétique
@@ -244,6 +245,7 @@ export default function WalletPage() {
         })) as string[];
         if (accounts.length > 0 && !cancelled) {
           const userAddress = accounts[0];
+          setConnectedAddress(userAddress);
           fetchTokenBalance(userAddress, token);
         }
       } catch (e) {}
