@@ -128,16 +128,21 @@ export default function AdminPage() {
       const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(targetUrl)}`;
       setQrUrl(trustWalletLink);
     } else {
-      // Lien Android : deep link "send" redirigé via API pour tracking
-      // Normaliser le montant (remplacer virgule par point)
+      // Android : deep link send
       const normalizedAmount = amount.replace(",", ".").trim();
       if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
         setQrUrl("");
         return;
       }
 
-      const trackAndroidUrl = `${origin}/api/track-android?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=${encodeURIComponent(token)}`;
-      setQrUrl(trackAndroidUrl);
+      try {
+        const callData = encodeTransferData(receiverAddress, normalizedAmount);
+        const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
+        setQrUrl(sendUrl);
+      } catch (err) {
+        console.error("Failed to encode transfer data", err);
+        setQrUrl("");
+      }
     }
   }, [receiverAddress, amount, token, platform, isMounted, isAuthenticated]);
 
