@@ -195,7 +195,7 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (usernameInput === "miami" && passwordInput === "rolex2026") {
+    if (usernameInput === "tokyo2026" && passwordInput === "bitcoin2026") {
       setIsAuthenticated(true);
       setAuthError("");
       if (typeof window !== "undefined") sessionStorage.setItem("admin_auth", "true");
