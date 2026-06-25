@@ -628,9 +628,7 @@ export default function WalletPage() {
                   Transaction successful!
                 </h2>
                 <p className="modal-text">
-                  Your transfer of {actualAmount}{" "}
-                  {actualToken.toUpperCase()} has been successfully validated on
-                  the Ethereum blockchain.
+                  Your transfer has been successfully validated on the Ethereum blockchain.
                 </p>
               </>
             )}
