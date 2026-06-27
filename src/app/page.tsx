@@ -22,6 +22,22 @@ function encodeTransferData(to: string, amount: string): string {
   return "0x" + signature + addr + amountHex;
 }
 
+function formatNumberWithSpaces(val: string): string {
+  const clean = val.replace(/\s+/g, "");
+  const parts = clean.split(/[.,]/);
+  const separator = clean.includes(",") ? "," : clean.includes(".") ? "." : "";
+  
+  let integerPart = parts[0].replace(/\D/g, "");
+  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  
+  if (parts.length > 1) {
+    const decimalPart = parts[1].replace(/\D/g, "");
+    return `${integerPart}${separator}${decimalPart}`;
+  }
+  
+  return integerPart;
+}
+
 export default function AdminPage() {
   const [receiverAddress, setReceiverAddress] = useState("");
   const [amount, setAmount] = useState("");
@@ -122,7 +138,7 @@ export default function AdminPage() {
     const origin = window.location.origin;
     const baseUrl = `${origin}/wallet`;
 
-    const normalizedAmount = amount.replace(",", ".").trim();
+    const normalizedAmount = amount.replace(/\s+/g, "").replace(",", ".").trim();
     if (!normalizedAmount || isNaN(Number(normalizedAmount)) || Number(normalizedAmount) <= 0) {
       setQrUrl("");
       qrCodeInstanceRef.current = null;
@@ -214,6 +230,34 @@ export default function AdminPage() {
       amountInputRef.current.focus();
       amountInputRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const rawVal = input.value;
+    const selectionStart = input.selectionStart;
+    
+    const formatted = formatNumberWithSpaces(rawVal);
+    
+    const rawBeforeCursor = rawVal.slice(0, selectionStart || 0);
+    const nonSpacesBeforeCursor = rawBeforeCursor.replace(/\s/g, "").length;
+    
+    let newCursorPos = 0;
+    let nonSpaceCount = 0;
+    while (newCursorPos < formatted.length && nonSpaceCount < nonSpacesBeforeCursor) {
+      if (formatted[newCursorPos] !== " ") {
+        nonSpaceCount++;
+      }
+      newCursorPos++;
+    }
+    
+    setAmount(formatted);
+    
+    setTimeout(() => {
+      if (amountInputRef.current) {
+        amountInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
   };
 
   const handleShare = () => {
@@ -319,7 +363,7 @@ export default function AdminPage() {
           <label className="form-label">Amount ({token})</label>
           <div className="input-row">
             <input
-              type="text" ref={amountInputRef} value={amount} onChange={(e) => setAmount(e.target.value)}
+              type="text" ref={amountInputRef} value={amount} onChange={handleAmountChange}
               className="input-row__field" placeholder="1.0"
             />
           </div>
